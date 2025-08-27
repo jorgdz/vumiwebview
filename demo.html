@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Capacitor Video WebView</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 16px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 8px 8px 8px 0;
+        }
+        button:hover {
+            background: #0056CC;
+        }
+        .danger {
+            background: #FF3B30;
+        }
+        .danger:hover {
+            background: #D70015;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 16px;
+        }
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎥 Demo: Capacitor Video WebView Plugin</h1>
+    
+    <div class="card">
+        <h2>📋 Estado de Permisos</h2>
+        <div id="permissionStatus" class="status warning">
+            Verificando permisos...
+        </div>
+        <button onclick="checkPermissions()">🔍 Verificar Permisos</button>
+        <button onclick="requestPermissions()">📝 Solicitar Permisos</button>
+    </div>
+
+    <div class="card">
+        <h2>🚀 Abrir Videollamada</h2>
+        <label>URL de Videollamada:</label>
+        <select id="urlSelect" onchange="updateCustomUrl()">
+            <option value="https://meet.google.com/new">Google Meet (Nueva reunión)</option>
+            <option value="https://jitsi.org/jitsi-meet/">Jitsi Meet Demo</option>
+            <option value="https://zoom.us/test">Zoom Test</option>
+            <option value="custom">URL Personalizada...</option>
+        </select>
+        
+        <input type="url" id="customUrl" placeholder="https://..." style="display:none;">
+        
+        <label>Título:</label>
+        <input type="text" id="title" value="Videollamada Demo" placeholder="Título del WebView">
+        
+        <label>Color de la Barra (Hex):</label>
+        <input type="text" id="toolbarColor" value="#007AFF" placeholder="#007AFF">
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0;">
+            <label><input type="checkbox" id="allowJavaScript" checked> JavaScript</label>
+            <label><input type="checkbox" id="allowGeolocation" checked> Geolocalización</label>
+            <label><input type="checkbox" id="allowMediaPlayback" checked> Reproducción Automática</label>
+            <label><input type="checkbox" id="debugEnabled"> Modo Debug</label>
+        </div>
+        
+        <button onclick="openVideoWebview()">🎥 Abrir WebView</button>
+        <button onclick="closeVideoWebview()" class="danger">❌ Cerrar WebView</button>
+    </div>
+
+    <div class="card">
+        <h2>⚙️ Configuración del WebView</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0;">
+            <label><input type="checkbox" id="allowThirdPartyCookies" checked> Cookies de Terceros</label>
+            <label><input type="checkbox" id="allowLocalStorage" checked> Almacenamiento Local</label>
+            <label><input type="checkbox" id="allowPopups"> Ventanas Emergentes</label>
+            <label><input type="checkbox" id="allowZoom"> Zoom</label>
+        </div>
+        <button onclick="setWebviewOptions()">💾 Guardar Configuración</button>
+    </div>
+
+    <div class="card">
+        <h2>📚 URLs de Prueba</h2>
+        <div style="margin: 16px 0;">
+            <h3>🏥 Telemedicina:</h3>
+            <button onclick="openQuickUrl('https://meet.google.com/new', 'Consulta Médica', '#4CAF50')">Google Meet - Consulta</button>
+            <button onclick="openQuickUrl('https://jitsi.org/jitsi-meet/', 'Jitsi Meet - Telemedicina', '#1976D2')">Jitsi Meet - Demo</button>
+            
+            <h3>🎓 Educación:</h3>
+            <button onclick="openQuickUrl('https://meet.google.com/new', 'Clase Virtual', '#FF9800')">Clase Virtual</button>
+            
+            <h3>💼 Empresarial:</h3>
+            <button onclick="openQuickUrl('https://meet.google.com/new', 'Reunión de Trabajo', '#6264A7')">Teams Style</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📝 Log de Eventos</h2>
+        <div id="eventLog" style="background: #f8f9fa; padding: 12px; border-radius: 8px; height: 200px; overflow-y: scroll; font-family: monospace; font-size: 14px;">
+            <div>🚀 Demo iniciado...</div>
+        </div>
+        <button onclick="clearLog()">🗑️ Limpiar Log</button>
+    </div>
+
+    <script type="module">
+        // Simulación del plugin para demo web
+        window.VideoWebview = {
+            async openVideoWebview(options) {
+                logEvent(`📱 Abriendo WebView: ${options.url}`);
+                logEvent(`⚙️ Opciones: ${JSON.stringify(options, null, 2)}`);
+                
+                // En un entorno real de Capacitor, esto abriría el WebView nativo
+                // Para demo web, abrimos en nueva ventana
+                const features = [
+                    'resizable=yes',
+                    'scrollbars=yes',
+                    'status=yes',
+                    'toolbar=no',
+                    'menubar=no',
+                    'location=no',
+                    'width=1024',
+                    'height=768'
+                ].join(',');
+
+                window.open(options.url, '_blank', features);
+                return Promise.resolve();
+            },
+
+            async closeVideoWebview() {
+                logEvent('❌ Cerrando WebView...');
+                return Promise.resolve();
+            },
+
+            async checkPermissions() {
+                logEvent('🔍 Verificando permisos...');
+                
+                try {
+                    // Simulación de verificación de permisos
+                    const permissions = {
+                        camera: 'granted',
+                        microphone: 'granted'
+                    };
+                    
+                    logEvent(`✅ Permisos: Cámara=${permissions.camera}, Micrófono=${permissions.microphone}`);
+                    return Promise.resolve(permissions);
+                } catch (error) {
+                    logEvent(`❌ Error verificando permisos: ${error.message}`);
+                    return Promise.resolve({ camera: 'prompt', microphone: 'prompt' });
+                }
+            },
+
+            async requestPermissions() {
+                logEvent('📝 Solicitando permisos...');
+                
+                try {
+                    // En web, intentamos acceder a getUserMedia
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: true, 
+                        audio: true 
+                    });
+                    
+                    // Liberamos el stream
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    logEvent('✅ Permisos otorgados');
+                    return Promise.resolve({ camera: 'granted', microphone: 'granted' });
+                } catch (error) {
+                    logEvent(`❌ Permisos denegados: ${error.message}`);
+                    return Promise.resolve({ camera: 'denied', microphone: 'denied' });
+                }
+            },
+
+            async setWebviewOptions(options) {
+                logEvent(`⚙️ Configurando WebView: ${JSON.stringify(options, null, 2)}`);
+                return Promise.resolve();
+            }
+        };
+
+        // Funciones globales para el demo
+        window.logEvent = function(message) {
+            const log = document.getElementById('eventLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.textContent = `[${timestamp}] ${message}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        };
+
+        window.clearLog = function() {
+            document.getElementById('eventLog').innerHTML = '<div>🗑️ Log limpiado...</div>';
+        };
+
+        window.updateCustomUrl = function() {
+            const select = document.getElementById('urlSelect');
+            const customInput = document.getElementById('customUrl');
+            if (select.value === 'custom') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+        };
+
+        window.checkPermissions = async function() {
+            try {
+                const status = await VideoWebview.checkPermissions();
+                const statusDiv = document.getElementById('permissionStatus');
+                
+                if (status.camera === 'granted' && status.microphone === 'granted') {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = '✅ Todos los permisos otorgados';
+                } else {
+                    statusDiv.className = 'status warning';
+                    statusDiv.textContent = `⚠️ Permisos pendientes - Cámara: ${status.camera}, Micrófono: ${status.microphone}`;
+                }
+            } catch (error) {
+                logEvent(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.requestPermissions = async function() {
+            try {
+                const status = await VideoWebview.requestPermissions();
+                await checkPermissions();
+            } catch (error) {
+                logEvent(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.openVideoWebview = async function() {
+            const urlSelect = document.getElementById('urlSelect');
+            const customUrl = document.getElementById('customUrl');
+            const url = urlSelect.value === 'custom' ? customUrl.value : urlSelect.value;
+            
+            if (!url) {
+                alert('Por favor ingresa una URL válida');
+                return;
+            }
+
+            const options = {
+                url: url,
+                title: document.getElementById('title').value,
+                toolbarColor: document.getElementById('toolbarColor').value,
+                allowJavaScript: document.getElementById('allowJavaScript').checked,
+                allowGeolocation: document.getElementById('allowGeolocation').checked,
+                allowMediaPlayback: document.getElementById('allowMediaPlayback').checked,
+                debugEnabled: document.getElementById('debugEnabled').checked
+            };
+
+            try {
+                await VideoWebview.openVideoWebview(options);
+            } catch (error) {
+                logEvent(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.closeVideoWebview = async function() {
+            try {
+                await VideoWebview.closeVideoWebview();
+            } catch (error) {
+                logEvent(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.setWebviewOptions = async function() {
+            const options = {
+                allowThirdPartyCookies: document.getElementById('allowThirdPartyCookies').checked,
+                allowLocalStorage: document.getElementById('allowLocalStorage').checked,
+                allowPopups: document.getElementById('allowPopups').checked,
+                allowZoom: document.getElementById('allowZoom').checked
+            };
+
+            try {
+                await VideoWebview.setWebviewOptions(options);
+                logEvent('✅ Configuración guardada');
+            } catch (error) {
+                logEvent(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.openQuickUrl = async function(url, title, color) {
+            try {
+                await VideoWebview.openVideoWebview({
+                    url: url,
+                    title: title,
+                    toolbarColor: color,
+                    allowJavaScript: true,
+                    allowGeolocation: true,
+                    allowMediaPlayback: true
+                });
+            } catch (error) {
+                logEvent(`❌ Error: ${error.message}`);
+            }
+        };
+
+        // Inicializar demo
+        document.addEventListener('DOMContentLoaded', function() {
+            logEvent('🎯 Demo cargado - ¡Listo para probar!');
+            checkPermissions();
+        });
+    </script>
+</body>
+</html>
