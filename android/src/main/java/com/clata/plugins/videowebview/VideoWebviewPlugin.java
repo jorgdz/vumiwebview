@@ -14,12 +14,13 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 
 @CapacitorPlugin(
     name = "VideoWebview",
     permissions = {
-        @Permission(strings = {Manifest.permission.CAMERA}, alias = "camera"),
-        @Permission(strings = {Manifest.permission.RECORD_AUDIO}, alias = "microphone")
+        @Permission(strings = { Manifest.permission.CAMERA }, alias = "camera"),
+        @Permission(strings = { Manifest.permission.RECORD_AUDIO }, alias = "microphone")
     }
 )
 public class VideoWebviewPlugin extends Plugin {
@@ -87,7 +88,7 @@ public class VideoWebviewPlugin extends Plugin {
         }
     }
 
-    @PermissionCallback
+    @com.getcapacitor.annotation.PermissionCallback
     private void permissionsCallback(PluginCall call) {
         JSObject result = new JSObject();
         result.put("camera", getPermissionState(Manifest.permission.CAMERA));

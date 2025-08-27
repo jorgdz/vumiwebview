@@ -89,7 +89,6 @@ android/build/
 android/.gradle/
 android/app/build/
 android/local.properties
-android/gradle.properties
 android/keystore.properties
 android/.cxx/
 *.apk

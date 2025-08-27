@@ -21,6 +21,8 @@ npm install capacitor-video-webview
 npx cap sync
 ```
 
+> **⚠️ Importante para Ionic Angular:** Si encuentras errores de compilación en Android, consulta [`IONIC_ANGULAR_FIX.md`](./IONIC_ANGULAR_FIX.md) para soluciones específicas.
+
 ### Configuración Adicional
 
 #### Android
