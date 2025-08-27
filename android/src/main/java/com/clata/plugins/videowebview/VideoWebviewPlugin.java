@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.JSObject;
-import com.getcapacitor.PermissionCallback;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -66,8 +65,8 @@ public class VideoWebviewPlugin extends Plugin {
     @PluginMethod
     public void checkPermissions(PluginCall call) {
         JSObject result = new JSObject();
-        result.put("camera", getPermissionState(Manifest.permission.CAMERA));
-        result.put("microphone", getPermissionState(Manifest.permission.RECORD_AUDIO));
+        result.put("camera", getVideoWebviewPermissionState(Manifest.permission.CAMERA));
+        result.put("microphone", getVideoWebviewPermissionState(Manifest.permission.RECORD_AUDIO));
         call.resolve(result);
     }
 
@@ -91,8 +90,8 @@ public class VideoWebviewPlugin extends Plugin {
     @com.getcapacitor.annotation.PermissionCallback
     private void permissionsCallback(PluginCall call) {
         JSObject result = new JSObject();
-        result.put("camera", getPermissionState(Manifest.permission.CAMERA));
-        result.put("microphone", getPermissionState(Manifest.permission.RECORD_AUDIO));
+        result.put("camera", getVideoWebviewPermissionState(Manifest.permission.CAMERA));
+        result.put("microphone", getVideoWebviewPermissionState(Manifest.permission.RECORD_AUDIO));
         call.resolve(result);
     }
 
@@ -116,7 +115,7 @@ public class VideoWebviewPlugin extends Plugin {
         call.resolve();
     }
 
-    private String getPermissionState(String permission) {
+    private String getVideoWebviewPermissionState(String permission) {
         if (ContextCompat.checkSelfPermission(getContext(), permission) == PackageManager.PERMISSION_GRANTED) {
             return "granted";
         }
