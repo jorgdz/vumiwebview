@@ -77,7 +77,7 @@ public class VideoWebviewPlugin extends Plugin {
             Manifest.permission.RECORD_AUDIO
         };
 
-        if (hasRequiredPermissions()) {
+        if (hasVideoWebviewRequiredPermissions()) {
             JSObject result = new JSObject();
             result.put("camera", "granted");
             result.put("microphone", "granted");
@@ -122,7 +122,7 @@ public class VideoWebviewPlugin extends Plugin {
         return "denied";
     }
 
-    private boolean hasRequiredPermissions() {
+    private boolean hasVideoWebviewRequiredPermissions() {
         return ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
                ContextCompat.checkSelfPermission(getContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
     }
