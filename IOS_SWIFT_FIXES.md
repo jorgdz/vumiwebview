@@ -130,3 +130,118 @@ El plugin ahora es compatible con:
 - **iOS 16.4+** - Debug de WebView
 
 Todas las funciones principales funcionan en iOS 13+, con características adicionales disponibles en versiones más recientes.
+
+---
+
+# 🔙 Mejoras en el Botón de Regreso - VideoWebViewController
+
+## 🎯 **Problema Solucionado**
+
+El botón de regreso (`backButtonTapped`) no permitía volver a la aplicación principal porque solo usaba `dismiss(animated: true)` sin considerar la estructura de navegación completa.
+
+## ✅ **Mejoras Implementadas**
+
+### **1. Navegación Inteligente del WebView**
+```swift
+// Primero verifica si el WebView puede ir hacia atrás
+if webView.canGoBack {
+    webView.goBack()  // Navega hacia atrás en el historial web
+    return
+}
+```
+
+### **2. Manejo Múltiple de Controladores**
+```swift
+// Maneja diferentes casos de presentación
+if let navController = self.navigationController {
+    if navController.viewControllers.count > 1 {
+        navController.popViewController(animated: true)  // Pop si hay stack
+    } else {
+        navController.dismiss(animated: true)  // Dismiss si es root
+    }
+} else {
+    dismiss(animated: true)  // Dismiss directo si no hay nav controller
+}
+```
+
+### **3. Callback al Plugin**
+```swift
+// Notifica al plugin cuando se cierra
+public var onClose: (() -> Void)?
+
+videoWebViewController.onClose = { [weak self] in
+    self?.webViewNavigationController?.dismiss(animated: true) {
+        self?.webViewNavigationController = nil
+    }
+}
+```
+
+### **4. Cierre desde JavaScript**
+```swift
+// Permite cerrar desde código JavaScript
+window.closeVideoWebview = function() {
+    window.webkit.messageHandlers.closeHandler.postMessage('close');
+};
+```
+
+## 🚀 **Comportamiento Mejorado**
+
+### **Flujo de Navegación:**
+1. **Primera pulsación**: Si el WebView tiene historial → navega hacia atrás
+2. **Sin historial**: Cierra el WebView completamente
+3. **Múltiples métodos**: Garantiza que siempre pueda cerrar
+
+### **Casos de Uso:**
+- ✅ **Videollamada con pasos**: Puede navegar entre páginas antes de cerrar
+- ✅ **Cierre directo**: Funciona desde cualquier página
+- ✅ **Integración JavaScript**: Sitios web pueden cerrar programáticamente
+- ✅ **Fallback robusto**: Múltiples métodos de cierre
+
+## 🔧 **Logs de Debugging**
+
+El sistema ahora incluye logs detallados:
+
+```
+🔙 VideoWebView: Back button tapped
+🔙 VideoWebView: WebView can go back, navigating back
+```
+
+O:
+
+```
+🔙 VideoWebView: Back button tapped  
+🔙 VideoWebView: Closing WebView controller
+🔙 VideoWebView: Usando navigation controller
+🔙 VideoWebView: onClose callback ejecutado
+```
+
+## 📱 **Uso desde JavaScript**
+
+Los sitios web ahora pueden cerrar el WebView:
+
+```javascript
+// Cerrar desde JavaScript
+if (window.closeVideoWebview) {
+    window.closeVideoWebview();
+}
+
+// Ejemplo en una videollamada
+function endCall() {
+    // Terminar la llamada
+    hangupCall();
+    
+    // Cerrar el WebView automáticamente
+    if (window.closeVideoWebview) {
+        window.closeVideoWebview();
+    }
+}
+```
+
+## 🧪 **Para Probar**
+
+1. **Navegación normal**: Abre una videollamada, navega, pulsa back
+2. **Cierre directo**: Abre WebView, pulsa back inmediatamente  
+3. **Desde JavaScript**: Usa `window.closeVideoWebview()` en la consola
+4. **Verificar logs**: Revisa los logs en Xcode para confirmar el flujo
+
+Esta mejora asegura que el botón de regreso siempre funcione correctamente, independientemente de cómo se presente el WebView o qué contenido esté cargado.

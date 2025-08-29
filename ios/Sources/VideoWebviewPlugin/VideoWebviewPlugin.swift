@@ -34,6 +34,14 @@ public class VideoWebviewPlugin: CAPPlugin {
                 title: title,
                 toolbarColor: toolbarColor
             )
+            
+            // Configurar el closure de cierre
+            videoWebViewController.onClose = { [weak self] in
+                print("🔙 VideoWebView: onClose callback ejecutado")
+                self?.webViewNavigationController?.dismiss(animated: true) {
+                    self?.webViewNavigationController = nil
+                }
+            }
 
             let navigationController = UINavigationController(rootViewController: videoWebViewController)
             navigationController.modalPresentationStyle = .fullScreen
@@ -53,7 +61,7 @@ public class VideoWebviewPlugin: CAPPlugin {
         }
     }
 
-    @objc public override func checkPermissions(_ call: CAPPluginCall) {
+    @objc func checkPermissions(_ call: CAPPluginCall) {
         let cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
         let microphoneStatus = AVCaptureDevice.authorizationStatus(for: .audio)
 
@@ -65,7 +73,7 @@ public class VideoWebviewPlugin: CAPPlugin {
         call.resolve(result)
     }
 
-    @objc public override func requestPermissions(_ call: CAPPluginCall) {
+    @objc func requestPermissions(_ call: CAPPluginCall) {
         let group = DispatchGroup()
         var cameraResult = "denied"
         var microphoneResult = "denied"

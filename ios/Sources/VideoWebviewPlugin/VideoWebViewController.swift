@@ -12,6 +12,9 @@ public class VideoWebViewController: UIViewController {
     private var debugEnabled = false
     private var webviewTitle = "Video WebView"
     private var toolbarColor: String?
+    
+    // Closure para notificar cuando se cierra
+    public var onClose: (() -> Void)?
 
     public func configure(
         url: String,
@@ -100,6 +103,16 @@ public class VideoWebViewController: UIViewController {
         if allowGeolocation {
             config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
         }
+        
+        // Agregar script para permitir cerrar desde JavaScript
+        let closeScript = """
+            window.closeVideoWebview = function() {
+                window.webkit.messageHandlers.closeHandler.postMessage('close');
+            };
+        """
+        let closeUserScript = WKUserScript(source: closeScript, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+        config.userContentController.addUserScript(closeUserScript)
+        config.userContentController.add(self, name: "closeHandler")
 
         // Obtener opciones adicionales de UserDefaults
         let allowZoom = UserDefaults.standard.bool(forKey: "VideoWebview_allowZoom")
@@ -143,7 +156,52 @@ public class VideoWebViewController: UIViewController {
     }
 
     @objc private func backButtonTapped() {
-        dismiss(animated: true)
+        print("🔙 VideoWebView: Back button tapped")
+        
+        // Verificar si el WebView puede ir hacia atrás en su historial
+        if webView.canGoBack {
+            print("🔙 VideoWebView: WebView can go back, navigating back")
+            webView.goBack()
+            return
+        }
+        
+        // Si no puede ir hacia atrás en el WebView, cerrar el controlador
+        print("🔙 VideoWebView: Closing WebView controller")
+        
+        // Ejecutar el closure de cierre si está definido
+        onClose?()
+        
+        // Verificar si estamos en un navigation controller
+        if let navController = self.navigationController {
+            print("🔙 VideoWebView: Usando navigation controller")
+            // Si hay más de un view controller en el stack, hacer pop
+            if navController.viewControllers.count > 1 {
+                navController.popViewController(animated: true)
+            } else {
+                // Si es el root view controller del navigation controller, dismiss todo
+                navController.dismiss(animated: true, completion: nil)
+            }
+        } else {
+            print("🔙 VideoWebView: Usando dismiss directo")
+            // Si no hay navigation controller, hacer dismiss directo
+            dismiss(animated: true, completion: nil)
+        }
+        
+        // Método alternativo: intentar cerrar desde el presentingViewController
+        if let presentingVC = self.presentingViewController {
+            print("🔙 VideoWebView: Usando presentingViewController como fallback")
+            presentingVC.dismiss(animated: true, completion: nil)
+        }
+    }
+}
+
+// MARK: - WKScriptMessageHandler
+extension VideoWebViewController: WKScriptMessageHandler {
+    public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        if message.name == "closeHandler" {
+            print("🔙 VideoWebView: Close requested from JavaScript")
+            backButtonTapped()
+        }
     }
 }
 
